@@ -1,0 +1,17 @@
+#!/bin/sh
+cachedir="${XDG_CACHE_HOME:-"$HOME/.cache"}"
+cache="$cachedir/dmenu_run"
+priorcache="$cachedir/dmenu_run_recent"
+[ ! -e "$cachedir" ] && mkdir -p "$cachedir"
+[ ! -s "$priorcache" ] && touch "$priorcache"
+
+IFS=:
+if stest -dqr -n "$cache" $PATH || [ ! -s "$cache" ]; then
+  progs=$(stest -flx $PATH | sort -u | tee "$cache")
+else
+  progs=$(cat "$cache")
+fi
+prior=$(cat "$priorcache")
+cmd=$(echo $progs | dmenu -i -r -p : -hp "$(echo $prior | paste -sd , - )") || exit
+(echo "$cmd";(echo $prior | grep -v "$cmd" | head -n 5)) > $priorcache
+${SHELL:-"/bin/sh"} -c $cmd &
